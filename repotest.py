@@ -1,5 +1,9 @@
 def student1Function():
-    pass
+    while True:
+        if x == 10:
+            print("Hola amigo que pasa?")
+        else:
+            return "Bleh"
 def student2Function():
     pass
 ...
