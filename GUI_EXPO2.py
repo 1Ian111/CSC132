@@ -1,62 +1,84 @@
-from tkinter import *
-from tkinter import font
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout
+from PySide6.QtGui import QPainter, QPen, QColor, QFont
+from PySide6.QtCore import Qt, QPoint, QTimer
+import sys
 import random
 
-# Initialize main window
-root = Tk()
-root.title("Controller-less Controller")
-root.geometry('900x600')
-root.configure(bg='#0f0f0f')
-root.resizable(False, False)
+class MeshCanvas(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.nodes = [QPoint(random.randint(50, 1230), random.randint(50, 600)) for _ in range(45)]  # fit 1280x650
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start(80)
 
-# Fonts
-title_font = font.Font(family="Consolas", size=20, weight="bold")
-button_font = font.Font(family="Consolas", size=12)
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.fillRect(self.rect(), QColor(15, 15, 15))  # dark bg
 
-# Canvas for animated-style MediaPipe-ish mesh
-canvas = Canvas(root, width=900, height=600, bg="#0f0f0f", highlightthickness=0)
-canvas.place(x=0, y=0)
+        # Connections
+        pen = QPen(QColor("#00ffff"), 1)
+        painter.setPen(pen)
+        for i in range(len(self.nodes)):
+            for j in range(i+1, len(self.nodes)):
+                if random.random() < 0.07:
+                    painter.drawLine(self.nodes[i], self.nodes[j])
 
-# Generate random MediaPipe-style node mesh
-nodes = [(random.randint(50, 850), random.randint(50, 550)) for _ in range(30)]
+        # Nodes
+        for node in self.nodes:
+            painter.setBrush(QColor("#00ffff"))
+            painter.drawEllipse(node, 3, 3)
 
-# Draw connections (random pairs)
-for i in range(len(nodes)):
-    x1, y1 = nodes[i]
-    for j in range(i + 1, len(nodes)):
-        if random.random() < 0.1:  # 10% chance to connect
-            x2, y2 = nodes[j]
-            canvas.create_line(x1, y1, x2, y2, fill="#00ffff", width=1)
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Controller-less Controller")
+        self.setFixedSize(1280, 650)
 
-# Draw nodes (dots)
-for x, y in nodes:
-    canvas.create_oval(x-3, y-3, x+3, y+3, fill="#00ffff", outline="")
+        self.canvas = MeshCanvas()
+        self.setCentralWidget(self.canvas)
 
-# Title Label
-title = Label(root, text="> Welcome to Controller-less Controller <", fg="#39ff14",
-              bg="#0f0f0f", font=title_font)
-title.place(relx=0.5, y=60, anchor='center')
+        # Overlay layout
+        overlay = QWidget(self.canvas)
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        overlay.setLayout(layout)
+        overlay.setGeometry(0, 0, 1280, 650)
 
-# Glowing button function
-def create_glow_button(text, command=None):
-    return Button(root, text=text,
-                  font=button_font,
-                  fg="#00ffff",
-                  bg="#1a1a1a",
-                  activebackground="#111111",
-                  activeforeground="#00ffff",
-                  relief="flat",
-                  padx=20, pady=12,
-                  bd=3,
-                  highlightthickness=2,
-                  highlightbackground="#00ffff",
-                  command=command)
+        # Title
+        title = QLabel("> Welcome to Controller-less Controller <")
+        title.setFont(QFont("Consolas", 22, QFont.Bold))
+        title.setStyleSheet("color: #39ff14; margin-bottom: 20px;")
+        layout.addWidget(title)
 
-# Place buttons
-create_glow_button("🖐 Hand Gesture Buttons").place(relx=0.5, y=180, anchor='center')
-create_glow_button("🕺 Full Body Movement").place(relx=0.5, y=250, anchor='center')
-create_glow_button("🖱 Mouse Hand Gesture").place(relx=0.5, y=320, anchor='center')
-create_glow_button("🚪 Quit", command=root.quit).place(relx=0.5, y=390, anchor='center')
+        # Button style
+        btn_style = """
+            QPushButton {
+                color: #00ffff;
+                background-color: #1a1a1a;
+                border: 2px solid #00ffff;
+                border-radius: 8px;
+                padding: 14px 28px;
+                font-family: Consolas;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #111;
+                color: #39ff14;
+                border-color: #39ff14;
+            }
+        """
 
-# Run it
-root.mainloop()
+        # Buttons
+        for text in ["🖐 Hand Gesture Buttons", "🕺 Full Body Movement", "🖱 Mouse Hand Gesture", "🚪 Quit"]:
+            btn = QPushButton(text)
+            btn.setStyleSheet(btn_style)
+            btn.clicked.connect(QApplication.quit if "Quit" in text else lambda: print(f"{text} clicked"))
+            layout.addWidget(btn)
+
+# Run the app
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()
