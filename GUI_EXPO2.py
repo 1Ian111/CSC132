@@ -1,3 +1,11 @@
+#This code creates a cool-looking desktop app using PySide6 (which is like a toolkit for building GUIs in Python). 
+#The app window is sized 1280x650 and has a dark background with glowing blue dots and lines moving around like a
+#techy mesh. At the center, there's a title saying “Welcome to Controller-less Controller” and four stylish buttons. 
+#These buttons include options like hand gestures or quitting the app. When you click a button (except “Quit”), 
+#it just prints a message in the console for now. The moving background is drawn with random points and lines 
+#that keep updating every 80 milliseconds, giving it a futuristic, animated look.
+
+
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout
 from PySide6.QtGui import QPainter, QPen, QColor, QFont
 from PySide6.QtCore import Qt, QPoint, QTimer
