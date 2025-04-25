@@ -1,16 +1,13 @@
-#This code creates a cool-looking desktop app using PySide6 (which is like a toolkit for building GUIs in Python). 
-#The app window is sized 1280x650 and has a dark background with glowing blue dots and lines moving around like a
-#techy mesh. At the center, there's a title saying “Welcome to Controller-less Controller” and four stylish buttons. 
-#These buttons include options like hand gestures or quitting the app. When you click a button (except “Quit”), 
-#it just prints a message in the console for now. The moving background is drawn with random points and lines 
-#that keep updating every 80 milliseconds, giving it a futuristic, animated look.
-
+# This code builds a futuristic-looking GUI app using PySide6.
+# It features an animated background of glowing blue dots and lines,
+# a centered title, and four interactive buttons that each launch a separate Python file.
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout
 from PySide6.QtGui import QPainter, QPen, QColor, QFont
 from PySide6.QtCore import Qt, QPoint, QTimer
 import sys
 import random
+import subprocess
 
 class MeshCanvas(QWidget):
     def __init__(self):
@@ -78,11 +75,24 @@ class MainWindow(QMainWindow):
             }
         """
 
-        # Buttons
-        for text in ["🖐 Hand Gesture Buttons", "🕺 Full Body Movement", "🖱 Mouse Hand Gesture", "🚪 Quit"]:
+        # Button text to file mapping
+        button_actions = {
+            "🖐 Hand Gesture Buttons": "Hand Gesture buttons.py",
+            "🕺 Full Body Movement": "Full Body Movement.py",
+            "🖱 Mouse Hand Gesture": "Mouse Hand Gestures.py",
+            "🚪 Quit": "quit"
+        }
+
+        # Create buttons with functionality
+        for text, filename in button_actions.items():
             btn = QPushButton(text)
             btn.setStyleSheet(btn_style)
-            btn.clicked.connect(QApplication.quit if "Quit" in text else lambda: print(f"{text} clicked"))
+
+            if filename == "quit":
+                btn.clicked.connect(QApplication.quit)
+            else:
+                btn.clicked.connect(lambda _, f=filename: subprocess.Popen(["python", f], shell=True))
+
             layout.addWidget(btn)
 
 # Run the app
