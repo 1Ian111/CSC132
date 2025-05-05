@@ -10,6 +10,7 @@ keyboard = Controller()
 jumping = False
 OOB = Out_of_Bounds.OutOfBoundsWindow()
 crouchingDown = False
+lookingUp = False
 correctPosition = True
 oldPosition = False
 rightPressed = False
@@ -204,10 +205,20 @@ def down():
             crouchingDown = True
     else:
         if crouchingDown:
-            keyboard.release('s')
+            keyboard.release('s')  
             crouchingDown = False
+def up():
+    global lookingUp
+    if(lindexy <= leyeiny and rindexy <= leyeiny):
+        if not lookingUp:
+            keyboard.press('w')
+            lookingUp = True
+    else:
+        if lookingUp:
+            keyboard.release('w')
+            lookingUp = False
 
-def start():
+def start(): 
     global startPressed, startTime
     if(abs(lindexy - rindexy) <= .1 and abs(lwristy - rwristy) <= .1 and abs(rwristx - lwristx) > .4):
         if startPressed == False and (time.time() - startTime) >= 0.5:
@@ -317,6 +328,7 @@ while True:
             right()
             left()
             down()
+            up()
             start()
         else:
             OOB.show()
