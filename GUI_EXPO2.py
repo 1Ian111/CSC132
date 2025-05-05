@@ -93,6 +93,7 @@ class MainWindow(QMainWindow):
                 btn.clicked.connect(QApplication.quit)
             else:
                 btn.clicked.connect(lambda _, f=filename: subprocess.Popen(["python", f], shell=True))
+                btn.clicked.connect(QApplication.quit)
 
             layout.addWidget(btn)
 

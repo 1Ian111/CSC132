@@ -1,6 +1,3 @@
-#Make Distance Hip Related!!!
-#Make Distance Hip Related!!!
-#Make Distance Hip Related!!!
 import cv2
 import sys
 import mediapipe as mp
@@ -8,8 +5,10 @@ import time
 from pynput.keyboard import Key, Controller
 import Out_of_Bounds
 import subprocess
+import math
 keyboard = Controller()
 OOB = Out_of_Bounds.OutOfBoundsWindow()
+jumping = False
 buttonA = False
 buttonB = False
 buttonX = False
@@ -31,10 +30,13 @@ oldPosition = False
 startPressed = False
 delayPosition = True
 resetKeys = False
+knuckleClose = False
 jumpTime = 0
 startTime = 0
-prevKneeL = 0
-prevKneeR = 0
+prevFootL = 0
+prevFootR = 0
+prevWristL = 0
+prevWristR = 0
 currentMessage = ""
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -44,6 +46,9 @@ cap.set(cv2.CAP_PROP_FPS, 30)
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 pose = mp_pose.Pose(static_image_mode=False, model_complexity=0)
+
+def distance(x1, y1, x2, y2):
+    return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
 def checkPosition():
     global currentMessage, correctPosition, oldPosition
@@ -84,47 +89,60 @@ def toggleMenu():
                 subprocess.Popen(["python", r"C:\Users\smith\Downloads\New folder\GUI_EXPO2.py"])
                 sys.exit()
 def buttons():
-    global buttonA, buttonB, buttonX, buttonY, prevKneeL, prevKneeR, jumpTime
+    global buttonA, buttonB, buttonX, buttonY, prevFootL, prevFootR, jumpTime, knuckleClose, prevWristL, prevWristR
     #Presses A button on controller
     def buttona():
-        global buttonA, jumpTime
-        if(abs(lwristx - rshoulderx) <= 0.15 and abs(lwristy - rshouldery) <= 0.15):
-            if not buttonA:
-                keyboard.press('z')
-                buttonA = True
-                jumpTime = time.time()
-        #elif(abs(rthumbx - rshoulderx) <= 0.2 and abs(rthumby - rshouldery) <= 0.2):
-        #    if not buttonA:
-        #        keyboard.press('z')
-        #        buttonA = True
+        global buttonA, jumpTime, knuckleClose
+        left_distance = distance(lwristx, lwristy, rshoulderx, rshouldery)
+        right_distance = distance(rwristx, rwristy, rshoulderx, rshouldery)
+        threshold = 0.09  #Smaller = Closer
+        left_hand_close = left_distance <= threshold
+        right_hand_close = right_distance <= threshold
+        if(left_hand_close ^ right_hand_close):
+            if(left_hand_close and abs(lwristz - rshoulderz) <= .5):
+                if not buttonA:
+                    keyboard.press('z')
+                    buttonA = True
+                    jumpTime = time.time()
+            elif(abs(rwristx - relbowx) <= 0.12 and relbowy - rwristy >= 0.08):
+                if not buttonA:
+                    keyboard.press('z')
+                    buttonA = True
+                    jumpTime = time.time()
         else:
-            # Release after .6 seconds
-            if buttonA and (time.time() - jumpTime >= .6):
+            if buttonA and (time.time() - jumpTime >= 0.6):
                 keyboard.release('z')
                 buttonA = False
     #Presses B button on controller
     def buttonb():
-        global buttonB
-        #if(abs(lthumbx - lshoulderx) <= 0.2 and abs(lthumby - lshouldery) <= 0.2):
-        #    if not buttonB:
-        #        keyboard.press('x')
-        #        buttonB = True
-        if(abs(rwristx - lshoulderx) <= 0.15 and abs(rwristy - lshouldery) <= 0.15):
-            if not buttonB:
-                keyboard.press('x')
-                buttonB = True
+        global buttonB, knuckleClose
+        left_distance = abs(distance(lwristx, lwristy, lshoulderx, lshouldery))
+        right_distance = distance(rwristx, rwristy, lshoulderx, lshouldery)
+
+        threshold = 0.1  #Smaller = Closer
+
+        left_hand_close = left_distance <= threshold
+        right_hand_close = right_distance <= threshold
+        if left_hand_close ^ right_hand_close:
+            if(right_hand_close and abs(rwristz - lshoulderz) <= 0.5):
+                if not buttonB:
+                    keyboard.press('x')
+                    buttonB = True
+            elif(abs(lwristx - lelbowx) <= 0.12 and lelbowy - lwristy >= 0.08):
+                if not buttonB:
+                    keyboard.press('x')
+                    buttonB = True
         else:
             if buttonB:
                 keyboard.release('x')
                 buttonB = False
+
     #Presses X button on controller
     def buttonx():
         global buttonX
-        if(abs(lthumbx - rhipx) <= 0.1 and abs(lthumby - rhipy) <= 0.1):
-            if not buttonX:
-                keyboard.press('c')
-                buttonX = True
-        elif(abs(rthumbx - rhipx) <= 0.1 and abs(rthumby - rhipy) <= 0.1):
+        left_hand_close = abs(lwristx - rhipx) <= 0.07 and abs(lwristy - rhipy) <= 0.07
+        right_hand_close = abs(rwristx - rhipx) <= 0.07 and abs(rwristy - rhipy) <= 0.07
+        if(left_hand_close ^ right_hand_close):
             if not buttonX:
                 keyboard.press('c')
                 buttonX = True
@@ -135,11 +153,9 @@ def buttons():
     #Presses Y button on controller
     def buttony():
         global buttonY
-        if(abs(lthumbx - lshoulderx) <= 0.1 and abs(lthumby - lshouldery) <= 0.1):
-            if not buttonY:
-                keyboard.press('v')
-                buttonY = True
-        elif(abs(rthumbx - lshoulderx) <= 0.1 and abs(rthumby - lshouldery) <= 0.1):
+        left_hand_close = abs(lwristx - lhipx) <= 0.04 and abs(lwristy - lhipy) <= 0.04
+        right_hand_close = abs(rwristx - lhipx) <= 0.04 and abs(rwristy - lhipy) <= 0.04
+        if(left_hand_close ^ right_hand_close):
             if not buttonY:
                 keyboard.press('v')
                 buttonY = True
@@ -149,23 +165,26 @@ def buttons():
                 buttonY = False
     #Alternate way to press the A button on controller
     def jump():
-        global prevKneeL, prevKneeR, buttonA, jumpTime
-        if not buttonA and (lfootindy - prevKneeL) >= 0.02 and (rfootindy - prevKneeR) >= 0.02:
-            keyboard.press('z')
-            buttonA = True
+        global prevFootL, prevFootR, jumping, jumpTime
+    
+        if not jumping and (lfootindy - prevFootL) >= 0.02 and (rfootindy - prevFootR) >= 0.02:
+            keyboard.press(' ')
+            jumping = True
             jumpTime = time.time()
 
         # Release after .6 seconds
-        if buttonA and (time.time() - jumpTime >= .6):
-            keyboard.release('z')
-            buttonA = False
-        prevKneeL = lfootindy
-        prevKneeR = rfootindy
+        if jumping and (time.time() - jumpTime >= .6):
+            keyboard.release(' ')
+            jumping = False
+        prevFootL = lfootindy
+        prevFootR = rfootindy
     buttona()
     buttonb()
     buttonx()
     buttony()
     jump()
+    prevWristR = rwristz
+    prevWristL = lwristz
         
 #Controls analog stick directions
 def lanalog():
@@ -304,7 +323,7 @@ def ranalog():
     #Presses right analog stick left on controller
     def ranalogleft():
         global rAnalogLeft
-        if(abs(nosex - lshoulderx) <= 0.05):
+        if(abs(nosex - lshoulderx) <= 0.03):
             if not rAnalogLeft:
                 keyboard.press('j')
                 rAnalogLeft = True
@@ -315,7 +334,7 @@ def ranalog():
     #Presses right analog stick right on controller
     def ranalogright():
         global rAnalogRight
-        if(abs(nosex - rshoulderx) <= 0.05):
+        if(abs(nosex - rshoulderx) <= 0.03):
             if not rAnalogRight:
                 keyboard.press('l')
                 rAnalogRight = True
@@ -443,12 +462,17 @@ while True:
         lfootindy = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
         rfootindy = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
 
+        lshoulderz = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER].z
+        rshoulderz = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER].z
+        lwristz = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST].z
+        rwristz = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST].z
         #hugging left wrist -.03, right writst -.01
         #X left wrist -.09, right wrist -.085
         #if checkPosition():
             #print("left wrist elbow " + str(lwristy - lelbowy))
             #print("right wrist elbow " + str(rwristy - lelbowy))
         #Left Low Right High
+        print(lwristz - rshoulderz)
         toggleMenu()
         if checkPosition() == True:
             if(oldPosition == False):
@@ -456,7 +480,7 @@ while True:
             buttons()
             lanalog()
             ranalog()
-            dpad()
+            #dpad()
             start()
             resetKeys = True
         else:

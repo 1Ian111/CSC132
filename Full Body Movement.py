@@ -5,7 +5,7 @@ import time
 from pynput.keyboard import Key, Controller
 import pyautogui
 import Out_of_Bounds
-import pydirectinput
+import subprocess
 keyboard = Controller()
 jumping = False
 OOB = Out_of_Bounds.OutOfBoundsWindow()
@@ -15,10 +15,17 @@ oldPosition = False
 rightPressed = False
 leftPressed = False
 shiftPressed = False
-startPressed = False
+startPressed = True
+lFootPressed = False
+rFootPressed = False
+footPressStartTime = 0
+startTime = 0
+leftTime = 0
+rightTime = 0
 jumpTime = 0
-prevKneeL = 0
-prevKneeR = 0
+prevFootL = 0
+prevFootR = 0
+prevIndexz = 0
 currentMessage = ""
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -62,32 +69,60 @@ def checkPosition():
         currentMessage = "Just Right!"
     return correctPosition
 def toggleMenu():
-    if(abs(lelbowx - relbowx) <= .12 and abs(lelbowy - relbowy) <= .1 and abs(lwristy - rwristy) <= .1 and abs(lwristx - rwristx) >= .05 and abs(lelbowx - nosex) <=.2 and abs(relbowx - nosex) <=.2):
+    if(abs(lelbowx - relbowx) <= .05 and abs(lelbowy - relbowy) <= .04 and abs(lwristy - rwristy) <= .1 and abs(lwristx - rwristx) >= .05 and abs(lelbowx - nosex) <=.2 and abs(relbowx - nosex) <=.2):
         if(-.1 < (lwristy - lelbowy) < -.05 and -.1 < (lwristy - relbowy) < -.05):
             if(-.1 < (rwristy - lelbowy) < -.05 and -.1 < (rwristy - relbowy) < -.05):
+                subprocess.Popen(["python", r"C:\Users\smith\Downloads\New folder\GUI_EXPO2.py"])
                 sys.exit()
 
 def jump():
-    global prevKneeL, prevKneeR, jumping, jumpTime
+    global prevFootL, prevFootR, jumping, jumpTime
     
-    if not jumping and (lfootindy - prevKneeL) >= 0.02 and (rfootindy - prevKneeR) >= 0.02:
+    if not jumping and (lfootindy - prevFootL) >= 0.02 and (rfootindy - prevFootR) >= 0.02:
         keyboard.press(' ')
         jumping = True
         jumpTime = time.time()
 
-    # Release after 1 second
+    # Release after .6 seconds
     if jumping and (time.time() - jumpTime >= .6):
         keyboard.release(' ')
         jumping = False
-    prevKneeL = lfootindy
-    prevKneeR = rfootindy
+    prevFootL = lfootindy
+    prevFootR = rfootindy
 
+def actionButton():
+    global prevIndexz, shiftPressed
+
+    current_indexz = rindexz 
+
+    z_diff = current_indexz - prevIndexz
+
+    if z_diff <= -0.05: 
+        if not shiftPressed:
+            keyboard.press(Key.shift)
+            shiftPressed = True
+
+    elif z_diff >= 0.05: 
+        if shiftPressed:
+            keyboard.release(Key.shift)
+            shiftPressed = False
+
+    prevIndexz = current_indexz
 def right():
-    global rightPressed, shiftPressed
+    global rightPressed, rFootPressed, shiftPressed, rightTime, footPressStartTime
+    current_time = time.time()
+
+    # === HIP CONTROL (takes priority) ===
     if rhipx <= 0.35:
+        # Cancel any foot press in progress
+        if rFootPressed:
+            keyboard.release('d')
+            rFootPressed = False
+
         if not rightPressed:
             keyboard.press('d')
             rightPressed = True
+
         if rhipx <= 0.25:
             if not shiftPressed:
                 keyboard.press(Key.shift)
@@ -96,18 +131,39 @@ def right():
             if shiftPressed:
                 keyboard.release(Key.shift)
                 shiftPressed = False
+
     else:
-        if rightPressed:
+        # Release keys if foot is not holding
+        if rightPressed and not rFootPressed:
             keyboard.release('d')
             rightPressed = False
         if shiftPressed:
             keyboard.release(Key.shift)
             shiftPressed = False
 
-def left():
-    global leftPressed, shiftPressed
+        if rfootindx <= 0.35:
+            if not rFootPressed and (current_time - rightTime >= 1.0):
+                keyboard.press('d')
+                footPressStartTime = current_time
+                rFootPressed = True
+                rightTime = current_time
 
+        if rFootPressed and (current_time - footPressStartTime >= 0.1):
+            keyboard.release('d')
+            rFootPressed = False
+
+def left():
+    global leftPressed, lFootPressed, shiftPressed, leftTime, footPressStartTime
+    current_time = time.time()
+
+    # === HIP CONTROL (takes priority) ===
     if lhipx >= 0.65:
+        # Cancel any foot press in progress
+        if lFootPressed:
+            keyboard.release('a')
+            lFootPressed = False
+
+        # Handle hip-controlled movement
         if not leftPressed:
             keyboard.press('a')
             leftPressed = True
@@ -122,15 +178,27 @@ def left():
                 shiftPressed = False
 
     else:
-        if leftPressed:
+        # Release keys if foot is not holding
+        if leftPressed and not lFootPressed:
             keyboard.release('a')
             leftPressed = False
         if shiftPressed:
             keyboard.release(Key.shift)
             shiftPressed = False
+
+        if lfootindx >= 0.65:
+            if not lFootPressed and (current_time - leftTime >= 1.0):
+                keyboard.press('a')
+                footPressStartTime = current_time
+                lFootPressed = True
+                leftTime = current_time
+
+        if lFootPressed and (current_time - footPressStartTime >= 0.1):
+            keyboard.release('a')
+            lFootPressed = False
 def down():
     global crouchingDown
-    if nosey >= .45:
+    if nosey >= .3:
         if not crouchingDown:
             keyboard.press('s')
             crouchingDown = True
@@ -140,15 +208,16 @@ def down():
             crouchingDown = False
 
 def start():
-    global startPressed
-    if(abs(lindexx - rindexx) >= .5 and abs(lwristy - rwristy) <= .1):
-        if not startPressed:
+    global startPressed, startTime
+    if(abs(lindexy - rindexy) <= .1 and abs(lwristy - rwristy) <= .1 and abs(rwristx - lwristx) > .4):
+        if startPressed == False and (time.time() - startTime) >= 0.5:
             keyboard.press(Key.enter)
             startPressed = True
-        else:
-            if startPressed:
-                keyboard.release(Key.enter)
-                startPressed = False
+            startTime = time.time()
+    else:
+        if startPressed:
+            keyboard.release(Key.enter)
+            startPressed = False
 
 while True:
     ret, frame = cap.read()
@@ -231,6 +300,8 @@ while True:
         lfootindy = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
         rfootindy = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
 
+        rindexz = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_INDEX].z
+
         #hugging left wrist -.03, right writst -.01
         #X left wrist -.09, right wrist -.085
         #if checkPosition():
@@ -242,6 +313,7 @@ while True:
             if(oldPosition == False):
                 OOB.hide()
             jump()
+            actionButton()
             right()
             left()
             down()
