@@ -61,14 +61,14 @@ def checkPosition():
             print("Too Close")
         currentMessage = "Too Close"
         correctPosition = False
-    if(lshoulderx >= .8):
+    if(lshoulderx >= .9):
         if(currentMessage == "Too Far Left"):
             pass
         else:
             print("Too Far Left")
         currentMessage = "Too Far Left"
         correctPosition = False
-    if(rshoulderx <= .2):
+    if(rshoulderx <= .1):
         if(currentMessage == "Too Far Right"):
             pass
         else:
@@ -95,22 +95,22 @@ def buttons():
         global buttonA, jumpTime, knuckleClose
         left_distance = distance(lwristx, lwristy, rshoulderx, rshouldery)
         right_distance = distance(rwristx, rwristy, rshoulderx, rshouldery)
-        threshold = 0.09  #Smaller = Closer
+        threshold = 0.11  #Smaller = Closer
         left_hand_close = left_distance <= threshold
         right_hand_close = right_distance <= threshold
         if(left_hand_close ^ right_hand_close):
-            if(left_hand_close and abs(lwristz - rshoulderz) <= .5):
+            if(left_hand_close and abs(lwristy - rshouldery) <= .15 and abs(lwristx - rshoulderx <= .07)):
                 if not buttonA:
                     keyboard.press('z')
                     buttonA = True
                     jumpTime = time.time()
-            elif(abs(rwristx - relbowx) <= 0.12 and relbowy - rwristy >= 0.08):
+            elif(abs(rwristx - relbowx) <= 0.06 and relbowy - rwristy >= 0.06):
                 if not buttonA:
                     keyboard.press('z')
                     buttonA = True
                     jumpTime = time.time()
         else:
-            if buttonA and (time.time() - jumpTime >= 0.6):
+            if buttonA:
                 keyboard.release('z')
                 buttonA = False
     #Presses B button on controller
@@ -119,16 +119,16 @@ def buttons():
         left_distance = abs(distance(lwristx, lwristy, lshoulderx, lshouldery))
         right_distance = distance(rwristx, rwristy, lshoulderx, lshouldery)
 
-        threshold = 0.1  #Smaller = Closer
+        threshold = 0.11  #Smaller = Closer
 
         left_hand_close = left_distance <= threshold
         right_hand_close = right_distance <= threshold
         if left_hand_close ^ right_hand_close:
-            if(right_hand_close and abs(rwristz - lshoulderz) <= 0.5):
+            if(right_hand_close and abs(rwristy - lshouldery) <= 0.15 and abs(rwristx - lshoulderx) <= 0.07):
                 if not buttonB:
                     keyboard.press('x')
                     buttonB = True
-            elif(abs(lwristx - lelbowx) <= 0.12 and lelbowy - lwristy >= 0.08):
+            elif(abs(lwristx - lelbowx) <= 0.06 and lelbowy - lwristy >= 0.06):
                 if not buttonB:
                     keyboard.press('x')
                     buttonB = True
@@ -140,8 +140,8 @@ def buttons():
     #Presses X button on controller
     def buttonx():
         global buttonX
-        left_hand_close = abs(lwristx - rhipx) <= 0.07 and abs(lwristy - rhipy) <= 0.07
-        right_hand_close = abs(rwristx - rhipx) <= 0.07 and abs(rwristy - rhipy) <= 0.07
+        left_hand_close = abs(lwristx - rhipx) <= 0.025 and abs(lwristy - rhipy) <= 0.04
+        right_hand_close = abs(rwristx - rhipx) <= 0.025 and abs(rwristy - rhipy) <= 0.04
         if(left_hand_close ^ right_hand_close):
             if not buttonX:
                 keyboard.press('c')
@@ -153,8 +153,8 @@ def buttons():
     #Presses Y button on controller
     def buttony():
         global buttonY
-        left_hand_close = abs(lwristx - lhipx) <= 0.04 and abs(lwristy - lhipy) <= 0.04
-        right_hand_close = abs(rwristx - lhipx) <= 0.04 and abs(rwristy - lhipy) <= 0.04
+        left_hand_close = abs(lwristx - lhipx) <= 0.03 and abs(lwristy - lhipy) <= 0.05
+        right_hand_close = abs(rwristx - lhipx) <= 0.03 and abs(rwristy - lhipy) <= 0.05
         if(left_hand_close ^ right_hand_close):
             if not buttonY:
                 keyboard.press('v')
@@ -182,7 +182,7 @@ def buttons():
     buttonb()
     buttonx()
     buttony()
-    jump()
+    #jump()
     prevWristR = rwristz
     prevWristL = lwristz
         
@@ -472,7 +472,7 @@ while True:
             #print("left wrist elbow " + str(lwristy - lelbowy))
             #print("right wrist elbow " + str(rwristy - lelbowy))
         #Left Low Right High
-        print(lwristz - rshoulderz)
+        print(rwristy - rhipy)
         toggleMenu()
         if checkPosition() == True:
             if(oldPosition == False):

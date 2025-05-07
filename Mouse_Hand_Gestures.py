@@ -1,21 +1,17 @@
 import cv2
 import mediapipe as mp
-import sys
 from time import sleep
 from pynput.keyboard import Key, Controller
-import time
+import pyautogui
+import sys
 import subprocess
+import time
 keyboard = Controller()
-leftPressed = False
-rightPressed = False
-upPressed = False
-downPressed = False
-jumpPressed = False
-runPressed = False
-startPressed = False
-runToggled = True
-startTime = 0
-jumpTime = 0
+pointerY = 0
+pointerX = 0
+pausePressed = False
+pauseTime = 0
+unpaused = True
 
 cap = cv2.VideoCapture(0)
 
@@ -24,6 +20,7 @@ hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1,
                        min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
 mp_drawing = mp.solutions.drawing_utils
+
 def toggleMenu():
     if(middleTipy < middle1y < middle0y and ringTipy < ring1y < ring0y):
         if(pointerTipy > pointer1y and pinkyTipy > pinky1y):
@@ -32,96 +29,35 @@ def toggleMenu():
                 subprocess.Popen(["python", r"C:\Users\smith\Downloads\New folder\GUI_EXPO2.py"])
                 sys.exit()
 
-def up():
-    global upPressed
-    if(pointerTipy <= pointer0y - 0.2):
-        if not upPressed:
-            keyboard.press('w')
-            upPressed = True
-    else:
-        if upPressed:
-            keyboard.release('w')
-            upPressed = False
+def pause():
+    global pausePressed, unpaused
 
-def down():
-    global downPressed
-    if(pointerTipy >= pointer0y + 0.2):
-        if not downPressed:
-            keyboard.press('s')
-            downPressed = True
-    else:
-        if downPressed:
-            keyboard.release('s')
-            downPressed = False
-
-def right():
-    global rightPressed
-    if(pointerTipx < pointer0x - 0.1):
-        if not rightPressed:
-            keyboard.press('d')
-            rightPressed = True
-    else:
-        if rightPressed:
-            keyboard.release('d')
-            rightPressed = False
-
-def left():
-    global leftPressed
-    if(pointerTipx > pointer0x + 0.08):
-        if not leftPressed:
-            keyboard.press('a')
-            leftPressed = True
-    else:
-        if leftPressed:
-            keyboard.release('a')
-            leftPressed = False
-
-def jump():
-    global jumpPressed, jumpTime
-    if(abs(thumbTipx - pointer1x) >= 0.12 or abs(thumbTipy - pointer1y) >= 0.12):
-        if(abs(thumbTipx - thumb0x) >= 0.03 and abs(thumbTipy - thumb0y) >= 0.04):
-            if not jumpPressed:
-                keyboard.press(' ')
-                jumpPressed = True
-                jumpTime = time.time()
-    if jumpPressed and time.time() - jumpTime >= 0.6:
-        keyboard.release(' ')
-        jumpPressed = False
-
-def run():
-    global runPressed, runToggled
-
-    pinkyRaised = pinkyTipy < pinky0y - 0.1
-
-    # Only toggle if pinky just went up and cooldown has passed
-    if pinkyRaised and runToggled:
-        runPressed = not runPressed
-
-        if runPressed: 
-            keyboard.press(Key.shift)
-        else:
-            keyboard.release(Key.shift)
-
-    # Update previous state
-    runToggled = not pinkyRaised
-
-
-def start():
-    global startPressed, startTime
     pinky = pinkyTipy < pinky2y < pinky1y < pinky0y
     ring = ringTipy < ring2y < ring1y < ring0y
     middle = middleTipy < middle2y < middle1y < middle0y
     pointer = pointerTipy < pointer2y < pointer1y < pointer0y
     thumb = thumbTipy < thumb2y < thumb1y < thumb0y
-    if(pinky and ring and middle and pointer and thumb):
-        if startPressed == False and (time.time() - startTime) >= 0.5:
-            keyboard.press(Key.enter)
-            startPressed = True
-            startTime = time.time()
-    else:
-        if startPressed:
-            keyboard.release(Key.enter)
-            startPressed = False
+    hand = pinky and ring and middle and pointer and thumb
+
+    if hand and unpaused:
+        pausePressed = not pausePressed
+        unpaused = False
+    elif not hand:
+        unpaused = True
+
+    return pausePressed
+
+def mouse():
+    global pointerY, pointerX
+    pointerY = pointerTipy * 1080
+    pointerX = (abs(1 - pointerTipx)) * 1920
+    pyautogui.moveTo(pointerX, pointerY)
+
+    if(abs(pointerTipy - thumbTipy) <= 0.05 and abs(pointerTipx - thumbTipx) <= 0.05 and abs(middleTipy - thumbTipy) <= 0.05 and abs(middleTipx - thumbTipx) <= 0.05):
+        pyautogui.rightClick()
+    elif(abs(pointerTipy - thumbTipy) <= 0.05 and abs(pointerTipx - thumbTipx) <= 0.05):
+        pyautogui.click()
+
 
 while True:
     ret, frame = cap.read()
@@ -132,7 +68,6 @@ while True:
     image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     results = hands.process(image_rgb)
-
 
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
@@ -182,19 +117,14 @@ while True:
             pinky1x = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP].x
             pinky2x = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_DIP].x
             pinkyTipx = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP].x
-
             toggleMenu()
-            left()
-            right()
-            up()
-            down()
-            jump()
-            start()
-            run()
-                 
+            if pause() == False:
+                mouse()
+            else:
+                pause()
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-            
 
 
 cap.release()

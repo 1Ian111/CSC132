@@ -77,11 +77,11 @@ class MainWindow(QMainWindow):
 
         # Button text to file mapping
         button_actions = {
-            " Hand Gesture Buttons": r"C:\Users\smith\Downloads\New folder\Hand Gesture buttons.py",
-            " Full Body Movement-2D": r"C:\Users\smith\Downloads\New folder\Full Body Movement.py",
-            " Full Body Movement-3D": r"C:\Users\smith\Downloads\New folder\Full Body Movement-3D.py",
-            " Mouse Hand Gesture": r"C:\Users\smith\Downloads\New folder\Mouse Hand Gestures.py",
-            " Quit": "quit"
+            "🖐 Hand Gesture Buttons": r"C:\Users\smith\Downloads\New folder\Hand Gesture buttons.py",
+            "🕺 Full Body Movement-2D": r"C:\Users\smith\Downloads\New folder\Full Body Movement.py",
+            "🕹️ Full Body Movement-3D": r"C:\Users\smith\Downloads\New folder\Full Body Movement-3D.py",
+            "🖱 Mouse Hand Gesture": r"C:\Users\smith\Downloads\New folder\Mouse_Hand_Gestures.py",
+            "🚪 Quit": "quit"
         }
 
         # Create buttons with functionality
