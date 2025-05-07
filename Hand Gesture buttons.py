@@ -1,10 +1,21 @@
 import cv2
 import mediapipe as mp
+import sys
 from time import sleep
 from pynput.keyboard import Key, Controller
-import pyautogui
-import pydirectinput
+import time
+import subprocess
 keyboard = Controller()
+leftPressed = False
+rightPressed = False
+upPressed = False
+downPressed = False
+jumpPressed = False
+runPressed = False
+startPressed = False
+runToggled = True
+startTime = 0
+jumpTime = 0
 
 cap = cv2.VideoCapture(0)
 
@@ -13,6 +24,108 @@ hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1,
                        min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
 mp_drawing = mp.solutions.drawing_utils
+def toggleMenu():
+    if(middleTipy < middle1y < middle0y and ringTipy < ring1y < ring0y):
+        print("passed 1")
+        if(pointerTipy > pointer1y and pinkyTipy > pinky1y):
+            print("passed 2")
+            if(abs(thumbTipy - thumb0y) <= 0.2):
+                keyboard.release(Key.shift)
+                subprocess.Popen(["python", r"C:\Users\smith\Downloads\New folder\GUI_EXPO2.py"])
+                sys.exit()
+
+def up():
+    global upPressed
+    if(pointerTipy <= pointer0y - 0.2):
+        if not upPressed:
+            keyboard.press('w')
+            upPressed = True
+    else:
+        if upPressed:
+            keyboard.release('w')
+            upPressed = False
+
+def down():
+    global downPressed
+    if(pointerTipy >= pointer0y + 0.2):
+        if not downPressed:
+            keyboard.press('s')
+            downPressed = True
+    else:
+        if downPressed:
+            keyboard.release('s')
+            downPressed = False
+
+def right():
+    global rightPressed
+    if(pointerTipx < pointer0x - 0.1):
+        if not rightPressed:
+            keyboard.press('d')
+            rightPressed = True
+    else:
+        if rightPressed:
+            keyboard.release('d')
+            rightPressed = False
+
+def left():
+    global leftPressed
+    if(pointerTipx > pointer0x + 0.1):
+        if not leftPressed:
+            keyboard.press('a')
+            leftPressed = True
+    else:
+        if leftPressed:
+            keyboard.release('a')
+            leftPressed = False
+
+def jump():
+    global jumpPressed, jumpTime
+    if(abs(thumbTipx - pointer1x) >= 0.12 or abs(thumbTipy - pointer1y) >= 0.12):
+        if(abs(thumbTipx - thumb0x) >= 0.03 and abs(thumbTipy - thumb0y) >= 0.04):
+            if not jumpPressed:
+                keyboard.press(' ')
+                jumpPressed = True
+                jumpTime = time.time()
+    if jumpPressed and time.time() - jumpTime >= 0.6:
+        keyboard.release(' ')
+        jumpPressed = False
+
+def run():
+    global runPressed, runToggled
+
+    pinkyRaised = pinkyTipy < pinky0y - 0.1
+
+    # Only toggle if pinky just went up and cooldown has passed
+    if pinkyRaised and runToggled:
+        runPressed = not runPressed
+
+        if runPressed:
+            keyboard.press(Key.shift)
+            print("Shift pressed")
+        else:
+            keyboard.release(Key.shift)
+            print("Shift released")
+
+    # Update previous state
+    runToggled = not pinkyRaised
+
+
+def start():
+    global startPressed, startTime
+    pinky = pinkyTipy < pinky2y < pinky1y < pinky0y
+    ring = ringTipy < ring2y < ring1y < ring0y
+    middle = middleTipy < middle2y < middle1y < middle0y
+    pointer = pinkyTipy < pointer2y < pointer1y < pointer0y
+    thumb = thumbTipy < thumb2y < thumb1y < thumb0y
+    if(pinky and ring and middle and pointer and thumb):
+        if startPressed == False and (time.time() - startTime) >= 0.5:
+            keyboard.press(Key.enter)
+            startPressed = True
+            startTime = time.time()
+    else:
+        if startPressed:
+            keyboard.release(Key.enter)
+            startPressed = False
 
 while True:
     ret, frame = cap.read()
@@ -23,6 +136,7 @@ while True:
     image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     results = hands.process(image_rgb)
+
 
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
@@ -73,57 +187,18 @@ while True:
             pinky2x = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_DIP].x
             pinkyTipx = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP].x
 
-
-            if (abs(pointerTipy - thumb0y) <= .2):
-                pointer1_gesture = 'none'
-            elif(pointerTipy < thumb0y):
-                pointer1_gesture = 'pointing up'
-            elif pointerTipy > thumb0y:
-                pointer1_gesture = 'pointing down'
-            else:
-                pointer1_gesture = 'other'
-            
-            if (abs(pointerTipx - wristx) <= .2):
-                pointer2_gesture = 'none'
-            elif(pointerTipx > wristx):
-                pointer2_gesture = 'pointing left'
-            elif pointerTipx < wristx:
-                pointer2_gesture = 'pointing right'
-            else:
-                pointer2_gesture = 'other'
-            
-            if (abs(pinkyTipy - pinky0y) <= .15 and abs(pinkyTipx - pinky0x) <= .15):
-                pinky_gesture = 'nojump'
-            else:
-                pinky_gesture = 'jump'
-            
-            if pointer1_gesture == 'pointing up':
-                keyboard.release('s')
-                keyboard.press('w')
-            elif pointer1_gesture == 'pointing down':
-                keyboard.release('w')
-                keyboard.press('s')
-            elif(pointer1_gesture == 'none'):
-                keyboard.release('w')
-                keyboard.release('s')
-            
-            if pointer2_gesture == 'pointing left':
-                keyboard.release('d')
-                keyboard.press('a')
-            elif pointer2_gesture == 'pointing right':
-                keyboard.release('a')
-                keyboard.press('d')
-            elif(pointer2_gesture == 'none'):
-                keyboard.release('a')
-                keyboard.release('d')
-                    
-            if pinky_gesture == 'jump':
-                pydirectinput.keyDown(' ')
-            else:
-                 pydirectinput.keyUp(' ')
+            toggleMenu()
+            left()
+            right()
+            up()
+            down()
+            jump()
+            start()
+            run()
                  
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+            
 
 
 cap.release()
