@@ -78,7 +78,7 @@ def left():
 
 def jump():
     global jumpPressed, jumpTime
-    if(abs(thumbTipx - pointer1x) >= 0.12 or abs(thumbTipy - pointer1y) >= 0.12):
+    if(abs(thumbTipx - pointer1x) >= 0.13 or abs(thumbTipy - pointer1y) >= 0.13):
         if(abs(thumbTipx - thumb0x) >= 0.03 and abs(thumbTipy - thumb0y) >= 0.04):
             if not jumpPressed:
                 keyboard.press(' ')
@@ -113,9 +113,9 @@ def start():
     middle = middleTipy < middle2y < middle1y < middle0y
     pointer = pointerTipy < pointer2y < pointer1y < pointer0y
     thumb = thumbTipy < thumb2y < thumb1y < thumb0y
-    handy = middleTipy <= pointerTipy < pinkyTipy < thumbTipy
-    handx = (pinkyTipx - ringTipx) <= 0.05 and ringTipx - middleTipx <= 0.05 and middleTipx - pointerTipx <= 0.05 and pointerTipx - thumbTipx <= 0.05
-    if(pinky and ring and middle and pointer and thumb and handy and handx):
+    handy = middleTipy <= ringTipy < pinkyTipy < thumbTipy
+    handx = (pinkyTipx - ringTipx) <= 0.05 and ringTipx - middleTipx <= 0.05
+    if(pinky and ring and middle and handy and handx):
         if startPressed == False and (time.time() - startTime) >= 0.5:
             keyboard.press(Key.enter)
             startPressed = True

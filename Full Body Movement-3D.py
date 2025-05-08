@@ -83,7 +83,7 @@ def checkPosition():
         currentMessage = "Just Right!"
     return correctPosition
 def toggleMenu():
-    if(abs(lelbowx - relbowx) <= .05 and abs(lelbowy - relbowy) <= .04 and abs(lwristy - rwristy) <= .1 and abs(lwristx - rwristx) >= .05 and abs(lelbowx - nosex) <=.2 and abs(relbowx - nosex) <=.2):
+    if(abs(lelbowx - relbowx) <= .6 and abs(lelbowy - relbowy) <= .06 and abs(lwristy - rwristy) <= .1 and abs(lwristx - rwristx) >= .05 and abs(lelbowx - nosex) <=.2 and abs(relbowx - nosex) <=.2):
         if(-.1 < (lwristy - lelbowy) < -.05 and -.1 < (lwristy - relbowy) < -.05):
             if(-.1 < (rwristy - lelbowy) < -.05 and -.1 < (rwristy - relbowy) < -.05):
                 subprocess.Popen(["python", r"C:\Users\smith\Downloads\New folder\GUI_EXPO2.py"])
@@ -104,7 +104,7 @@ def buttons():
                     keyboard.press('z')
                     buttonA = True
                     jumpTime = time.time()
-            elif(abs(rwristx - relbowx) <= 0.06 and relbowy - rwristy >= 0.06):
+            elif(abs(rwristx - relbowx) <= 0.04 and relbowy - rwristy >= 0.06):
                 if not buttonA:
                     keyboard.press('z')
                     buttonA = True
@@ -128,7 +128,7 @@ def buttons():
                 if not buttonB:
                     keyboard.press('x')
                     buttonB = True
-            elif(abs(lwristx - lelbowx) <= 0.06 and lelbowy - lwristy >= 0.06):
+            elif(abs(lwristx - lelbowx) <= 0.04 and lelbowy - lwristy >= 0.06):
                 if not buttonB:
                     keyboard.press('x')
                     buttonB = True
@@ -140,22 +140,22 @@ def buttons():
     #Presses X button on controller
     def buttonx():
         global buttonX
-        left_hand_close = abs(lwristx - rhipx) <= 0.025 and abs(lwristy - rhipy) <= 0.04
-        right_hand_close = abs(rwristx - rhipx) <= 0.025 and abs(rwristy - rhipy) <= 0.04
-        if(left_hand_close ^ right_hand_close):
+        #left_hand_close = abs(lwristx - rhipx) <= 0.02 and abs(lwristy - rhipy) <= 0.03
+        right_hand_close = -0.02 <= rwristx - rhipx <= -0.01 and abs(rwristy - rhipy) <= 0.08
+        if(right_hand_close):
             if not buttonX:
                 keyboard.press('c')
                 buttonX = True
         else:
             if buttonX:
                 keyboard.release('c')
-                buttonX = False
+                buttonX = False        
     #Presses Y button on controller
     def buttony():
         global buttonY
-        left_hand_close = abs(lwristx - lhipx) <= 0.03 and abs(lwristy - lhipy) <= 0.05
-        right_hand_close = abs(rwristx - lhipx) <= 0.03 and abs(rwristy - lhipy) <= 0.05
-        if(left_hand_close ^ right_hand_close):
+        left_hand_close = 0.008 <= lwristx - lhipx <= 0.022 and abs(lwristy - lhipy) <= 0.1
+        #right_hand_close = abs(rwristx - lhipx) <= 0.02 and abs(rwristy - lhipy) <= 0.03
+        if(left_hand_close):
             if not buttonY:
                 keyboard.press('v')
                 buttonY = True
@@ -301,7 +301,7 @@ def ranalog():
     #Presses right analog stick down on controller
     def ranalogdown():
         global rAnalogDown
-        if(abs(nosey - ((lshouldery + rshouldery)/2)) <= 0.02):
+        if(abs(nosey - ((lshouldery + rshouldery)/2)) <= 0.025):
             if not rAnalogDown:
                 keyboard.press('k')
                 rAnalogDown = True
@@ -312,7 +312,7 @@ def ranalog():
     #Presses right analog stick up on controller
     def ranalogup():
         global rAnalogUp
-        if(abs(nosey - ((lshouldery + rshouldery)/2)) >= 0.15):
+        if(abs(nosey - ((lshouldery + rshouldery)/2)) >= 0.1):
             if not rAnalogUp:
                 keyboard.press('i')
                 rAnalogUp = True
@@ -323,7 +323,7 @@ def ranalog():
     #Presses right analog stick left on controller
     def ranalogleft():
         global rAnalogLeft
-        if(abs(nosex - lshoulderx) <= 0.03):
+        if(abs(nosex - lshoulderx) <= 0.02):
             if not rAnalogLeft:
                 keyboard.press('j')
                 rAnalogLeft = True
@@ -334,7 +334,7 @@ def ranalog():
     #Presses right analog stick right on controller
     def ranalogright():
         global rAnalogRight
-        if(abs(nosex - rshoulderx) <= 0.03):
+        if(abs(nosex - rshoulderx) <= 0.02):
             if not rAnalogRight:
                 keyboard.press('l')
                 rAnalogRight = True
@@ -472,14 +472,14 @@ while True:
             #print("left wrist elbow " + str(lwristy - lelbowy))
             #print("right wrist elbow " + str(rwristy - lelbowy))
         #Left Low Right High
-        print(rwristy - rhipy)
+        #print(lwristx - lhipx)
         toggleMenu()
         if checkPosition() == True:
             if(oldPosition == False):
                 OOB.hide()
             buttons()
             lanalog()
-            ranalog()
+        #    ranalog()
             #dpad()
             start()
             resetKeys = True
