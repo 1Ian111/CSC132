@@ -27,7 +27,7 @@ mp_drawing = mp.solutions.drawing_utils
 def toggleMenu():
     if(middleTipy < middle1y < middle0y and ringTipy < ring1y < ring0y):
         if(pointerTipy > pointer1y and pinkyTipy > pinky1y):
-            if(abs(thumbTipy - thumb0y) <= 0.2):
+            if(abs(thumbTipy - thumb0y) <= 0.1):
                 keyboard.release(Key.shift)
                 subprocess.Popen(["python", r"C:\Users\smith\Downloads\New folder\GUI_EXPO2.py"])
                 sys.exit()
@@ -113,7 +113,9 @@ def start():
     middle = middleTipy < middle2y < middle1y < middle0y
     pointer = pointerTipy < pointer2y < pointer1y < pointer0y
     thumb = thumbTipy < thumb2y < thumb1y < thumb0y
-    if(pinky and ring and middle and pointer and thumb):
+    handy = middleTipy <= pointerTipy < pinkyTipy < thumbTipy
+    handx = (pinkyTipx - ringTipx) <= 0.05 and ringTipx - middleTipx <= 0.05 and middleTipx - pointerTipx <= 0.05 and pointerTipx - thumbTipx <= 0.05
+    if(pinky and ring and middle and pointer and thumb and handy and handx):
         if startPressed == False and (time.time() - startTime) >= 0.5:
             keyboard.press(Key.enter)
             startPressed = True
